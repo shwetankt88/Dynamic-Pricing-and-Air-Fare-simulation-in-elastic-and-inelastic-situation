@@ -134,3 +134,43 @@ def run_simulation(csv_path):
     )
 
     return output_path
+
+
+def run_simulation(csv_path):
+    price_data = load_real_data(csv_path)
+
+    sim_elastic = DynamicPricingSimulation(-1.5, price_data)
+    T_el, P_el, Q_el, R_el = sim_elastic.run()
+
+    sim_inelastic = DynamicPricingSimulation(-0.5, price_data)
+    T_in, P_in, Q_in, R_in = sim_inelastic.run()
+
+    output_path = "static/results/output.png"
+
+    plot_combined(
+        T_el, P_el, Q_el, R_el,
+        T_in, P_in, Q_in, R_in,
+        price_data,
+        output_path
+    )
+
+    # Metrics
+    idx_el = np.argmax(R_el)
+    idx_in = np.argmax(R_in)
+
+    results = {
+        "elastic": {
+            "max_revenue": float(R_el[idx_el]),
+            "optimal_price": float(P_el[idx_el]),
+            "quantity": float(Q_el[idx_el])
+        },
+        "inelastic": {
+            "max_revenue": float(R_in[idx_in]),
+            "optimal_price": float(P_in[idx_in]),
+            "quantity": float(Q_in[idx_in])
+        },
+        "image": output_path
+    }
+
+    return results
+
