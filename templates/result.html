@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simulation Result</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>📊 Simulation Output</h2>
+
+        <img src="/{{ graph }}">
+
+        <a href="/">← Run Another Simulation</a>
+    </div>
+</body>
+</html>
