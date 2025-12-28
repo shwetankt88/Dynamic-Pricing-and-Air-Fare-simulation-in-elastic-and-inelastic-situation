@@ -7,22 +7,25 @@ app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs("static/results", exist_ok=True)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    results = None
-
     if request.method == "POST":
         file = request.files["file"]
 
-        if file and file.filename.endswith(".csv"):
-            filepath = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
-            file.save(filepath)
+        if file.filename == "":
+            return "No file selected"
 
-            # 🔥 THIS is where the upgrade happens
-            results = run_simulation(filepath)
+        filepath = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
+        file.save(filepath)
 
-    return render_template("index.html", results=results)
+        graph_path = run_simulation(filepath)
+
+        return render_template("result.html", graph=graph_path)
+
+    return render_template("index.html")
 
 
 if __name__ == "__main__":

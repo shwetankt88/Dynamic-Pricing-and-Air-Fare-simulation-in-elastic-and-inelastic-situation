@@ -1,46 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Dynamic Airfare Pricing Simulator</title>
+    <title>Dynamic Pricing Simulator</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <div class="container">
+        <h2>✈️ Dynamic Air Fare Pricing</h2>
 
-<div class="container">
-    <h1>✈️ Dynamic Airfare Pricing Simulator</h1>
-    <p class="subtitle">Elastic vs Inelastic Demand Analysis</p>
-
-    <form method="POST" enctype="multipart/form-data">
-        <label class="upload-box">
-            Upload Flight Data (CSV)
-            <input type="file" name="file" required>
-        </label>
-        <button type="submit">Run Simulation</button>
-    </form>
-
-    {% if results %}
-    <div class="cards">
-        <div class="card">
-            <h3>Elastic Demand</h3>
-            <p><b>Max Revenue:</b> ₹{{ results.elastic.max_revenue | round(2) }}</p>
-            <p><b>Optimal Price:</b> ₹{{ results.elastic.optimal_price | round(2) }}</p>
-            <p><b>Quantity:</b> {{ results.elastic.quantity | round(2) }}</p>
-        </div>
-
-        <div class="card">
-            <h3>Inelastic Demand</h3>
-            <p><b>Max Revenue:</b> ₹{{ results.inelastic.max_revenue | round(2) }}</p>
-            <p><b>Optimal Price:</b> ₹{{ results.inelastic.optimal_price | round(2) }}</p>
-            <p><b>Quantity:</b> {{ results.inelastic.quantity | round(2) }}</p>
-        </div>
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".csv" required>
+            <button type="submit">Run Simulation</button>
+        </form>
     </div>
-
-    <div class="image-box">
-        <img src="{{ results.image }}" alt="Simulation Result">
-    </div>
-    {% endif %}
-</div>
-
 </body>
 </html>
