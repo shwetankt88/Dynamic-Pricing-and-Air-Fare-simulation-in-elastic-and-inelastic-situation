@@ -1,65 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>AirFare Simulator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Inter', sans-serif; background: #0f172a; color: white; }</style>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020617; color: white; }</style>
 </head>
-<body class="p-10">
-    <div class="max-w-4xl mx-auto bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700">
-        <h1 class="text-3xl font-bold mb-6 text-indigo-400">Dynamic Airfare Simulation</h1>
+<body class="p-8">
+    <div class="max-w-4xl mx-auto space-y-6">
+        <!-- 1. Upload Section -->
+        <div class="bg-slate-900/50 border border-slate-800 p-6 rounded-3xl">
+            <h2 class="text-xl font-bold mb-4">1. Upload New Data</h2>
+            <form action="/upload" method="POST" enctype="multipart/form-data" class="flex gap-4">
+                <input type="file" name="file" class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-600 file:text-white hover:file:bg-indigo-500">
+                <button type="submit" class="bg-slate-800 px-6 py-2 rounded-full border border-slate-700 hover:bg-slate-700">Upload</button>
+            </form>
+        </div>
+        {% if error_msg %}
+<div class="bg-red-500/20 border border-red-500/40 text-red-200 p-4 rounded-2xl mb-6 flex items-center gap-3 animate-pulse">
+    <span class="text-xl">⚠️</span>
+    <p class="text-sm font-semibold">{{ error_msg }}</p>
+</div>
+{% endif %}
 
-        <form action="/simulate" method="POST" class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Select Dataset -->
+        <!-- 2. Configuration Section -->
+        <form action="/simulate" method="POST" class="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl space-y-8">
+            <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Airfare Simulator</h1>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-2">Dataset</label>
-                    <select name="file_name" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3">
-                        {% for file in files %}<option value="{{file}}">{{file}}</option>{% endfor %}
+                    <label class="text-xs font-bold uppercase text-slate-500 tracking-widest">Select Dataset</label>
+                    <select id="file_name" name="file_name" onchange="updateOptions()" class="w-full mt-2 bg-slate-950 border border-slate-800 p-3 rounded-xl focus:ring-2 ring-indigo-500 outline-none">
+                        <option value="">Choose file...</option>
+                        {% for f in files %}<option value="{{f}}">{{f}}</option>{% endfor %}
                     </select>
                 </div>
-
-                <!-- Route Selection -->
                 <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-2">Source</label>
-                    <select name="source" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3">
-                        {% for s in sources %}<option value="{{s}}">{{s}}</option>{% endfor %}
-                    </select>
+                    <label class="text-xs font-bold uppercase text-slate-500 tracking-widest">Source</label>
+                    <select id="source" name="source" class="w-full mt-2 bg-slate-950 border border-slate-800 p-3 rounded-xl outline-none"></select>
                 </div>
-
                 <div>
-                    <label class="block text-sm font-medium text-slate-400 mb-2">Destination</label>
-                    <select name="destination" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3">
-                        {% for d in destinations %}<option value="{{d}}">{{d}}</option>{% endfor %}
-                    </select>
+                    <label class="text-xs font-bold uppercase text-slate-500 tracking-widest">Destination</label>
+                    <select id="destination" name="destination" class="w-full mt-2 bg-slate-950 border border-slate-800 p-3 rounded-xl outline-none"></select>
                 </div>
             </div>
 
-            <!-- Elasticity Sliders -->
-            <div class="p-4 bg-slate-900 rounded-xl">
-                <h3 class="font-semibold mb-4 text-indigo-300">Elasticity Parameters</h3>
-                <div class="space-y-4">
-                    <div>
-                        <label class="flex justify-between text-sm">Elastic Condition: <span id="e_val">-1.5</span></label>
-                        <input type="range" name="elastic_val" min="-5" max="0" step="0.1" value="-1.5"
-                               oninput="document.getElementById('e_val').innerText = this.value"
-                               class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-500">
-                    </div>
-                    <div>
-                        <label class="flex justify-between text-sm">Inelastic Condition: <span id="i_val">-0.5</span></label>
-                        <input type="range" name="inelastic_val" min="-1" max="0" step="0.1" value="-0.5"
-                               oninput="document.getElementById('i_val').innerText = this.value"
-                               class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500">
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-950/50 p-6 rounded-2xl">
+                <div>
+                    <label class="flex justify-between text-sm">Elasticity (High Sensitivity): <span id="e_v" class="text-orange-400">-1.5</span></label>
+                    <input type="range" name="elastic_val" min="-5" max="-1.1" step="0.1" value="-1.5" oninput="e_v.innerText=this.value" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-orange-500">
+                </div>
+                <div>
+                    <label class="flex justify-between text-sm">Inelasticity (Low Sensitivity): <span id="i_v" class="text-emerald-400">-0.5</span></label>
+                    <input type="range" name="inelastic_val" min="-1" max="-0.1" step="0.1" value="-0.5" oninput="i_v.innerText=this.value" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
                 </div>
             </div>
 
-            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-indigo-500/20">
-                Run Simulation
-            </button>
+            <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 py-4 rounded-2xl font-bold shadow-xl shadow-indigo-500/20 transition-all">Generate Analysis</button>
         </form>
     </div>
+
+    <script>
+        async function updateOptions() {
+            const file = document.getElementById('file_name').value;
+            if (!file) return;
+            const res = await fetch(`/get_options/${file}`);
+            const data = await res.json();
+            const s = document.getElementById('source');
+            const d = document.getElementById('destination');
+            s.innerHTML = data.sources.map(x => `<option value="${x}">${x}</option>`).join('');
+            d.innerHTML = data.destinations.map(x => `<option value="${x}">${x}</option>`).join('');
+        }
+    </script>
 </body>
 </html>

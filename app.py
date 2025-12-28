@@ -1,46 +1,70 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 import os
 import pandas as pd
 from simulation.pricing_model import run_simulation
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def get_routes(file_path):
+    df = pd.read_csv(file_path)
+    return sorted(df['Source'].unique().tolist()), sorted(df['Destination'].unique().tolist())
 
 @app.route('/')
 def index():
-    # List all CSV files in the uploads folder
     files = [f for f in os.listdir(UPLOAD_FOLDER) if f.endswith('.csv')]
+    return render_template('index.html', files=files)
 
-    if not files:
-        return "No CSV files found in 'uploads' folder. Please add some."
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files: return redirect(request.url)
+    file = request.files['file']
+    if file.filename == '': return redirect(request.url)
+    filename = secure_filename(file.filename)
+    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    return redirect(url_for('index'))
 
-    # Get unique sources/destinations from the first file to populate defaults
-    df = pd.read_csv(os.path.join(UPLOAD_FOLDER, files[0]))
-    sources = sorted(df['Source'].unique())
-    destinations = sorted(df['Destination'].unique())
-    return render_template('index.html', files=files, sources=sources, destinations=destinations)
+@app.route('/get_options/<filename>')
+def get_options(filename):
+    sources, dests = get_routes(os.path.join(UPLOAD_FOLDER, filename))
+    return jsonify({'sources': sources, 'destinations': dests})
 
-# CHANGE: Added 'GET' to methods and a check for request.method
-@app.route('/simulate', methods=['GET', 'POST'])
+@app.route('/simulate', methods=['POST'])
 def simulate():
-    if request.method == 'GET':
-        # If someone tries to visit /simulate directly, send them back home
-        return redirect(url_for('index'))
-
-    # Process the form data (POST request)
     file_name = request.form.get('file_name')
     source = request.form.get('source')
     dest = request.form.get('destination')
-    elastic_val = float(request.form.get('elastic_val'))
-    inelastic_val = float(request.form.get('inelastic_val'))
+
+    # Check if a file was actually selected
+    if not file_name:
+        files = [f for f in os.listdir(UPLOAD_FOLDER) if f.endswith('.csv')]
+        return render_template('index.html', files=files, error_msg="Please select a dataset first.")
 
     csv_path = os.path.join(UPLOAD_FOLDER, file_name)
 
     try:
-        results = run_simulation(csv_path, source, dest, elastic_val, inelastic_val)
-        return render_template('result.html', results=results, source=source, dest=dest)
-    except Exception as e:
-        return f"Error: {str(e)}. Please check if the Route exists in the selected CSV."
+        # We TRY to run the simulation
+        results = run_simulation(
+            csv_path, source, dest,
+            float(request.form['elastic_val']),
+            float(request.form['inelastic_val'])
+        )
+        return render_template('result.html', results=results, s=source, d=dest)
 
+    except ValueError as e:
+        # If the ValueError happens, we CATCH it here.
+        # This stops the system from crashing (no white error screen).
+        files = [f for f in os.listdir(UPLOAD_FOLDER) if f.endswith('.csv')]
+
+        # We reload the dropdown data so the user can try again
+        sources, dests = get_routes(csv_path)
+
+        return render_template('index.html',
+                               files=files,
+                               sources=sources,
+                               destinations=dests,
+                               error_msg=str(e)) # This sends the text to the red box
 if __name__ == '__main__':
     app.run(debug=True)
