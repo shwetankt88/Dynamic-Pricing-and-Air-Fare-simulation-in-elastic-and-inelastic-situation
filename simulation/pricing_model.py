@@ -101,10 +101,21 @@ def run_simulation(csv_path, source, dest, el_val, in_val):
     plt.savefig(output_path)
     plt.close()
 
+    idx_el = np.argmax(R_el)
+    idx_in = np.argmax(R_in)
+
     return {
-    "img": output_filename,
-    "total_rev_el": f"{np.sum(R_el * 0.1):,.0f}",
-    "total_rev_in": f"{np.sum(R_in * 0.1):,.0f}",
-    "max_price_el": f"{np.max(P_el):,.0f}",
-    "max_price_in": f"{np.max(P_in):,.0f}"
-}
+        "img": output_filename,
+        "total_rev_el": f"{np.sum(R_el * 0.1):,.0f}",
+        "total_rev_in": f"{np.sum(R_in * 0.1):,.0f}",
+        "el_val": el_val,
+        "in_val": in_val,
+        "max_rev_el": f"{R_el[idx_el]:,.2f}",
+        "max_rev_in": f"{R_in[idx_in]:,.2f}",
+        "price_at_max_el": f"{P_el[idx_el]:,.2f}",
+        "price_at_max_in": f"{P_in[idx_in]:,.2f}",
+        "qty_at_max_el": f"{Q_el[idx_el]:,.2f}",
+        "qty_at_max_in": f"{Q_in[idx_in]:,.2f}",
+        "day_at_max_el": f"{T_el[idx_el]:.1f}",
+        "day_at_max_in": f"{T_in[idx_in]:.1f}",
+    }
