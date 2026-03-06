@@ -1,5 +1,7 @@
 import matplotlib
 matplotlib.use('Agg')  # <--- ADD THIS LINE FIRST
+import os
+import uuid
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -57,6 +59,12 @@ class DynamicPricingSimulation:
         P = self.price_function(self.T)
         return self.T, P, Q, P * Q
 
+def _style_axis(ax):
+    ax.title.set_color('white')
+    ax.xaxis.label.set_color('white')
+    ax.yaxis.label.set_color('white')
+    ax.tick_params(colors='white')
+
 def run_simulation(csv_path, source, dest, el_val, in_val):
     price_data = load_real_data(csv_path, source, dest)
 
@@ -64,22 +72,39 @@ def run_simulation(csv_path, source, dest, el_val, in_val):
     T_el, P_el, Q_el, R_el = DynamicPricingSimulation(el_val, price_data).run()
     T_in, P_in, Q_in, R_in = DynamicPricingSimulation(in_val, price_data).run()
 
-    output_path = "static/results/output.png"
-    plt.figure(figsize=(12, 10), facecolor='#0f172a')
-    plt.rcParams.update({'text.color': "white", 'axes.labelcolor': "white", 'xtick.color': "white", 'ytick.color': "white"})
+    os.makedirs("static/results", exist_ok=True)
+    output_filename = f"results/output_{uuid.uuid4().hex}.png"
+    output_path = f"static/{output_filename}"
 
-    ax1 = plt.subplot(3, 1, 1); ax1.plot(T_el, P_el, color='#6366f1', lw=3); ax1.set_title("Price Trend"); ax1.set_facecolor('#1e293b')
-    ax2 = plt.subplot(3, 1, 2); ax2.plot(T_el, Q_el, color='#f59e0b', label='Elastic'); ax2.plot(T_in, Q_in, color='#10b981', label='Inelastic'); ax2.legend(); ax2.set_facecolor('#1e293b')
-    ax3 = plt.subplot(3, 1, 3); ax3.plot(T_el, R_el, color='#f59e0b'); ax3.plot(T_in, R_in, color='#10b981'); ax3.set_facecolor('#1e293b')
+    fig = plt.figure(figsize=(12, 10), facecolor='#0f172a')
+
+    ax1 = fig.add_subplot(3, 1, 1)
+    ax1.plot(T_el, P_el, color='#6366f1', lw=3)
+    ax1.set_title("Price Trend")
+    ax1.set_facecolor('#1e293b')
+    _style_axis(ax1)
+
+    ax2 = fig.add_subplot(3, 1, 2)
+    ax2.plot(T_el, Q_el, color='#f59e0b', label='Elastic')
+    ax2.plot(T_in, Q_in, color='#10b981', label='Inelastic')
+    ax2.legend()
+    ax2.set_facecolor('#1e293b')
+    _style_axis(ax2)
+
+    ax3 = fig.add_subplot(3, 1, 3)
+    ax3.plot(T_el, R_el, color='#f59e0b')
+    ax3.plot(T_in, R_in, color='#10b981')
+    ax3.set_facecolor('#1e293b')
+    _style_axis(ax3)
 
     plt.tight_layout()
     plt.savefig(output_path)
     plt.close()
 
     return {
-    "img": output_path,
+    "img": output_filename,
     "total_rev_el": f"{np.sum(R_el * 0.1):,.0f}",
     "total_rev_in": f"{np.sum(R_in * 0.1):,.0f}",
     "max_price_el": f"{np.max(P_el):,.0f}",
-    "max_price_in": f"{np.max(P_in):,.0f}"  # <--- CHANGE THIS FROM P_el TO P_in
+    "max_price_in": f"{np.max(P_in):,.0f}"
 }
