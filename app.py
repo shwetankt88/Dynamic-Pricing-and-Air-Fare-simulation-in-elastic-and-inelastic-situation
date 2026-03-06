@@ -7,6 +7,7 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def get_routes(file_path):
     df = pd.read_csv(file_path)
@@ -53,8 +54,8 @@ def simulate():
         )
         return render_template('result.html', results=results, s=source, d=dest)
 
-    except ValueError as e:
-        # If the ValueError happens, we CATCH it here.
+    except Exception as e:
+        # If an exception happens, we CATCH it here.
         # This stops the system from crashing (no white error screen).
         files = [f for f in os.listdir(UPLOAD_FOLDER) if f.endswith('.csv')]
 
@@ -68,6 +69,5 @@ def simulate():
                                error_msg=str(e)) # This sends the text to the red box
 if __name__ == '__main__':
     # Use the port assigned by the cloud provider, default to 5000
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)

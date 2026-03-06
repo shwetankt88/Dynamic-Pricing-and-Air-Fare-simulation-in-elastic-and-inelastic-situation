@@ -33,7 +33,7 @@
         </div>
 
         <div class="bg-slate-900 p-2 rounded-3xl border border-slate-800 overflow-hidden shadow-2xl">
-            <img src="{{ url_for('static', filename='results/output.png') }}?v={{range(1, 999)|random}}" class="w-full">
+            <img src="{{ url_for('static', filename=results.img) }}" class="w-full">
         </div>
     </div>
 </body>
